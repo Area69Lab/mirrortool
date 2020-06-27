@@ -1,0 +1,49 @@
+name: Starting Mirroring
+
+on:
+#  release:
+#    types: [published]
+#  push:
+#    branches:
+#      - master
+#    paths:
+#      - '.config'
+#  schedule:
+#    - cron: 0 8 * * 5
+  watch:
+    types: [started]
+    
+env:
+  DURL: NULL
+  TZ: Asia/Kolkata
+  MIR: bit
+  EXT: zip
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+       - name: Checkout
+         uses: actions/checkout@master      
+
+       - name: Clean Up
+         run: |
+           docker rmi `docker images -q`
+           sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d
+           sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* mysql* php*
+           sudo -E apt-get update
+           sudo -E apt-get -y autoremove --purge
+           sudo -E apt-get clean 
+       - name: Initializing environment
+         run: |
+            sudo -E apt-get -qq update
+            sudo -E apt-get -qq install aria2 curl wget
+       - name: Download time
+         run: |
+            aria2c $DURL
+       - name: Download transfer
+         run: |
+            curl -sL https://git.io/file-transfer | sh
+       - name: its upload time
+         run: |
+            ./transfer $MIR *.$EXT
